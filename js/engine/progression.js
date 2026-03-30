@@ -1,12 +1,27 @@
 import {REVIEW_MISSION_TAG_MAP} from '../config.js';
 
+function missionDefinitions(state) {
+  return state.missionDefs?.length ? state.missionDefs : (state._missionDefs || []);
+}
+
+function missionTrack(state, missionId) {
+  return missionDefinitions(state).find((entry) => entry.id === missionId)?.track || 'analog';
+}
+
+function trackMissionIds(state, track, missionCatalog = []) {
+  const ordered = (state.missionCatalog?.length ? state.missionCatalog : missionCatalog);
+  return ordered.filter((missionId) => missionTrack(state, missionId) === track);
+}
+
 export function ensureMissionState(state, missionId, missionCatalog = []) {
   if (!state.missions[missionId]) {
-    const index = missionCatalog.indexOf(missionId);
+    const track = missionTrack(state, missionId);
+    const index = trackMissionIds(state, track, missionCatalog).indexOf(missionId);
     state.missions[missionId] = {
       status: index <= 0 ? 'unlocked' : 'locked',
       attempts: 0,
       correct: 0,
+      skippedCount: 0,
       totalTimeMs: 0,
       misconceptionCounts: {},
       lastRunAt: 0,
@@ -31,28 +46,21 @@ const computeMissionStatus = (missionDef, missionEntry) => {
     return 'completed';
   }
 
-  if (missionEntry.attempts > 0) {
+  if (missionEntry.attempts > 0 || missionEntry.skippedCount > 0) {
     return 'in_progress';
   }
 
   return missionEntry.status;
-}
+};
 
 export function canUnlockNext(state, missionId, missionCatalog = []) {
-  const missionIndex = state.missionCatalog?.indexOf(missionId) ?? missionCatalog.indexOf(missionId);
-  const ordered = state.missionCatalog?.length ? state.missionCatalog : missionCatalog;
-  if (!ordered.length) {
+  const missionDef = missionDefinitions(state).find((entry) => entry.id === missionId);
+  if (!missionDef) {
     return false;
   }
 
-  if (missionIndex < 0) {
-    return false;
-  }
-
-  const missionDef = state.missionDefs?.find((entry) => entry.id === missionId) || state._missionDefs?.find((entry) => entry.id === missionId);
-  const entry = missionState(state, missionId);
-  const status = computeMissionStatus(missionDef || {}, entry);
-
+  const entry = missionState(state, missionId, missionCatalog);
+  const status = computeMissionStatus(missionDef, entry);
   return status === 'completed';
 }
 
@@ -76,12 +84,39 @@ export function computeMastery(skillId, state) {
   return Math.round((skill.correct / skill.attempts) * 100);
 }
 
+function unlockNextMissionInTrack(state, missionId) {
+  const defs = missionDefinitions(state);
+  const currentDef = defs.find((entry) => entry.id === missionId);
+  if (!currentDef) {
+    return;
+  }
+
+  const ordered = defs.filter((entry) => entry.track === currentDef.track);
+  const currentIndex = ordered.findIndex((entry) => entry.id === missionId);
+  const next = ordered[currentIndex + 1];
+  if (!next) {
+    return;
+  }
+
+  ensureMissionState(state, next.id, state.missionCatalog);
+  if (state.missions[next.id].status === 'locked') {
+    state.missions[next.id].status = 'unlocked';
+  }
+}
+
 export function recordAttempt(taskId, missionId, result, misconceptionTags = [], state, task = {}) {
-  const missionDef = state._missionDefs?.find((entry) => entry.id === missionId) || null;
+  const missionDef = missionDefinitions(state).find((entry) => entry.id === missionId) || null;
   const missionEntry = ensureMissionState(state, missionId, state.missionCatalog || []);
 
-  missionEntry.attempts += 1;
   missionEntry.lastRunAt = Date.now();
+
+  if (result.skipped) {
+    missionEntry.skippedCount += 1;
+    missionEntry.status = computeMissionStatus(missionDef || {}, missionEntry);
+    return missionEntry;
+  }
+
+  missionEntry.attempts += 1;
   if (result.correct) {
     missionEntry.correct += 1;
   }
@@ -103,7 +138,6 @@ export function recordAttempt(taskId, missionId, result, misconceptionTags = [],
   }
 
   missionEntry.status = computeMissionStatus(missionDef || {}, missionEntry);
-  const currentMissionIndex = state.missionCatalog.indexOf(missionId);
 
   if (misconceptionTags.length) {
     misconceptionTags.forEach((tag) => {
@@ -134,12 +168,8 @@ export function recordAttempt(taskId, missionId, result, misconceptionTags = [],
     });
   }
 
-  if (missionEntry.status === 'completed' && currentMissionIndex >= 0 && state.missionCatalog[currentMissionIndex + 1]) {
-    const nextId = state.missionCatalog[currentMissionIndex + 1];
-    ensureMissionState(state, nextId, state.missionCatalog);
-    if (state.missions[nextId].status === 'locked') {
-      state.missions[nextId].status = 'unlocked';
-    }
+  if (missionEntry.status === 'completed') {
+    unlockNextMissionInTrack(state, missionId);
   }
 
   return missionEntry;

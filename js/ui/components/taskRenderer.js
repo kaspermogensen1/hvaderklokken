@@ -1,4 +1,6 @@
 import {ClockCanvas} from './ClockCanvas.js';
+import {createDigitalTimeInput} from './DigitalTimeInput.js';
+import {createTimeReadout} from './TimeReadout.js';
 import {toDigital12, toDigital24, toDanishPhrase} from '../../engine/timeModel.js';
 
 export function mountTask({mount, task, state, onSubmit}) {
@@ -8,12 +10,13 @@ export function mountTask({mount, task, state, onSubmit}) {
   const prompt = document.createElement('div');
   prompt.className = 'prompt';
   prompt.textContent = task.promptText;
-
   wrapper.append(prompt);
 
   let clock = null;
+  let digitalInput = null;
   let selected = null;
   let digitalRow = null;
+  let readout = null;
 
   if (task.showClock) {
     const clockWrap = document.createElement('div');
@@ -50,6 +53,31 @@ export function mountTask({mount, task, state, onSubmit}) {
     }
   }
 
+  if (task.answerMode === 'digital_input') {
+    digitalInput = createDigitalTimeInput({
+      initialTime: task.initialTime ?? null,
+      onChange: ({totalMinutes}) => {
+        if (readout && typeof totalMinutes === 'number') {
+          readout.update(totalMinutes);
+        }
+      }
+    });
+    wrapper.append(digitalInput.el);
+
+    if (task.showReadout) {
+      readout = createTimeReadout({
+        digital12: false,
+        digital24: true,
+        spoken: true,
+        context: true
+      });
+      wrapper.append(readout.el);
+      if (task.initialTime != null) {
+        readout.update(task.initialTime);
+      }
+    }
+  }
+
   const optionsWrap = document.createElement('div');
   optionsWrap.className = 'options';
 
@@ -67,9 +95,9 @@ export function mountTask({mount, task, state, onSubmit}) {
           child.classList.remove('speaking-highlight');
         });
         button.classList.add('secondary');
-        
-        // Auto-submit instantly for choice tasks
-        if (window.speechSynthesis) window.speechSynthesis.cancel();
+        if (window.speechSynthesis) {
+          window.speechSynthesis.cancel();
+        }
         onSubmit?.({selected}, task, clock);
       });
       optionsWrap.append(button);
@@ -81,38 +109,43 @@ export function mountTask({mount, task, state, onSubmit}) {
   actionRow.className = 'toolbar';
 
   const handleCheck = () => {
-    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+
     const answer = task.answerMode === 'clock'
       ? {time: clock ? clock.getCanonicalTime() : task.expected?.totalMinutes}
-      : {selected};
+      : task.answerMode === 'digital_input'
+        ? {time: digitalInput?.getTime() ?? null}
+        : {selected};
 
     if (task.answerMode === 'choice' && !answer.selected) {
+      return;
+    }
+
+    if (task.answerMode === 'digital_input' && typeof answer.time !== 'number') {
       return;
     }
 
     onSubmit?.(answer, task, clock);
   };
 
-  const checkBtn = document.createElement('button');
-  checkBtn.type = 'button';
-  checkBtn.textContent = 'Tjek svar';
-  checkBtn.addEventListener('click', handleCheck);
-
-  // Only show Tjek svar for 'clock' tasks where drag interaction has no clear end state
-  if (task.answerMode === 'clock') {
+  if (task.answerMode === 'clock' || task.answerMode === 'digital_input') {
+    const checkBtn = document.createElement('button');
+    checkBtn.type = 'button';
+    checkBtn.textContent = 'Tjek svar';
+    checkBtn.addEventListener('click', handleCheck);
     actionRow.append(checkBtn);
   }
 
-  if (task.answerMode !== 'clock') {
-    const skip = document.createElement('button');
-    skip.type = 'button';
-    skip.className = 'secondary';
-    skip.textContent = 'Spring opgaven over';
-    skip.addEventListener('click', () => {
-      onSubmit?.({selected: null}, task, clock);
-    });
-    actionRow.append(skip);
-  }
+  const skip = document.createElement('button');
+  skip.type = 'button';
+  skip.className = 'secondary';
+  skip.textContent = 'Spring opgaven over';
+  skip.addEventListener('click', () => {
+    onSubmit?.({skipped: true}, task, clock);
+  });
+  actionRow.append(skip);
 
   wrapper.append(actionRow);
   mount.innerHTML = '';
@@ -120,45 +153,43 @@ export function mountTask({mount, task, state, onSubmit}) {
 
   let speechTimeout;
   if (window.speechSynthesis && state.settings?.ttsEnabled !== false) {
-    window.speechSynthesis.cancel(); // Stop anything playing
-    
+    window.speechSynthesis.cancel();
+
     const promptUtterance = new SpeechSynthesisUtterance(task.promptText);
     promptUtterance.lang = 'da-DK';
-    promptUtterance.rate = 0.9; // Slightly slower for kids
-    
-    // Check if the current environment allows background speech synthesis
-    // to avoid overlapping sentences when spamming next.
-    promptUtterance.onstart = () => {};
+    promptUtterance.rate = 0.9;
 
-    
     const optionUtterances = [];
     if (task.answerMode === 'choice' && Array.isArray(task.options)) {
       task.options.forEach((option, index) => {
         const optionUtterance = new SpeechSynthesisUtterance(option.label);
         optionUtterance.lang = 'da-DK';
         optionUtterance.rate = 0.9;
-        
+
         optionUtterance.onstart = () => {
           const btn = optionsWrap.children[index];
-          if (btn) btn.classList.add('speaking-highlight');
+          if (btn) {
+            btn.classList.add('speaking-highlight');
+          }
         };
-        
+
         optionUtterance.onend = () => {
           const btn = optionsWrap.children[index];
-          if (btn) btn.classList.remove('speaking-highlight');
+          if (btn) {
+            btn.classList.remove('speaking-highlight');
+          }
         };
-        
+
         optionUtterances.push(optionUtterance);
       });
-      
+
       promptUtterance.onend = () => {
         speechTimeout = setTimeout(() => {
-          optionUtterances.forEach(u => window.speechSynthesis.speak(u));
+          optionUtterances.forEach((utterance) => window.speechSynthesis.speak(utterance));
         }, 500);
       };
     }
 
-    // Delay slightly to ensure DOM is ready and juice is handled
     setTimeout(() => {
       window.speechSynthesis.speak(promptUtterance);
     }, 100);
@@ -166,9 +197,18 @@ export function mountTask({mount, task, state, onSubmit}) {
 
   return {
     cleanup() {
-      if (speechTimeout) clearTimeout(speechTimeout);
-      if (window.speechSynthesis) window.speechSynthesis.cancel();
-      if (clock?.destroy) clock.destroy();
+      if (speechTimeout) {
+        clearTimeout(speechTimeout);
+      }
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+      if (clock?.destroy) {
+        clock.destroy();
+      }
+      if (digitalInput?.destroy) {
+        digitalInput.destroy();
+      }
     },
     clock
   };

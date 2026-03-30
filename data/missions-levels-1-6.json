@@ -1,8 +1,9 @@
 {
-  "version": "1.0.0",
+  "version": "2.1.1",
   "missions": [
     {
       "id": "m1",
+      "track": "analog",
       "level": 1,
       "title": "Møde uret",
       "objective": "Forstå time- og minutviser.",
@@ -19,6 +20,7 @@
     },
     {
       "id": "m2",
+      "track": "analog",
       "level": 2,
       "title": "Fuldtime og halvtime",
       "objective": "Lær hele timer og halvtime, inklusive 'halv'.",
@@ -35,6 +37,7 @@
     },
     {
       "id": "m3",
+      "track": "analog",
       "level": 3,
       "title": "Kvart over og kvart i",
       "objective": "Træn kvarte-deling og kvart-sprog.",
@@ -51,6 +54,7 @@
     },
     {
       "id": "m4",
+      "track": "analog",
       "level": 4,
       "title": "Hvert femte minut",
       "objective": "Arbejde med fem-minuttersmærker.",
@@ -67,6 +71,7 @@
     },
     {
       "id": "m5",
+      "track": "analog",
       "title": "Præcise minutter",
       "level": 5,
       "objective": "Lær præcise minutter og små forskydninger.",
@@ -83,6 +88,7 @@
     },
     {
       "id": "m6",
+      "track": "analog",
       "title": "Oversæt mellem former",
       "level": 6,
       "objective": "Sammenhæng mellem analog, digital og sproglig tid.",
@@ -96,6 +102,100 @@
       "requiredMastery": 84,
       "difficultyBand": 6,
       "totalTasks": 10
+    },
+    {
+      "id": "dm1",
+      "track": "digital",
+      "level": 1,
+      "title": "Mød det digitale ur",
+      "objective": "Læs HH:MM og hold styr på timer og minutter.",
+      "skills": ["digital-structure", "leading-zeroes"],
+      "taskDistribution": {
+        "read_digital_time": 4,
+        "select_digital_time": 4
+      },
+      "requiredMastery": 70,
+      "difficultyBand": 1,
+      "totalTasks": 8
+    },
+    {
+      "id": "dm2",
+      "track": "digital",
+      "level": 2,
+      "title": "Mønstre i tiden",
+      "objective": "Arbejd med :00, :15, :30 og :45.",
+      "skills": ["digital-patterns", "quarter-patterns"],
+      "taskDistribution": {
+        "read_digital_time": 2,
+        "select_digital_time": 3,
+        "translate_digital_to_spoken": 3
+      },
+      "requiredMastery": 74,
+      "difficultyBand": 2,
+      "totalTasks": 8
+    },
+    {
+      "id": "dm3",
+      "track": "digital",
+      "level": 3,
+      "title": "Før og efter",
+      "objective": "Sammenlign tider og se hvilken der kommer først.",
+      "skills": ["before-after", "time-comparison"],
+      "taskDistribution": {
+        "compare_times": 6,
+        "read_digital_time": 2
+      },
+      "requiredMastery": 76,
+      "difficultyBand": 3,
+      "totalTasks": 8
+    },
+    {
+      "id": "dm4",
+      "track": "digital",
+      "level": 4,
+      "title": "Tidligt eller sent",
+      "objective": "Vurder tid i forhold til en starttid.",
+      "skills": ["early-late", "schedule-sense"],
+      "taskDistribution": {
+        "judge_early_late": 6,
+        "compare_times": 2
+      },
+      "requiredMastery": 78,
+      "difficultyBand": 4,
+      "totalTasks": 8
+    },
+    {
+      "id": "dm5",
+      "track": "digital",
+      "level": 5,
+      "title": "Dele af dagen",
+      "objective": "Forbind tider med morgen, formiddag, eftermiddag og aften.",
+      "skills": ["day-segments", "daily-rhythm"],
+      "taskDistribution": {
+        "classify_day_segment": 4,
+        "match_daily_context": 3,
+        "read_digital_time": 1
+      },
+      "requiredMastery": 80,
+      "difficultyBand": 5,
+      "totalTasks": 8
+    },
+    {
+      "id": "dm6",
+      "track": "digital",
+      "level": 6,
+      "title": "Bro til tale og ur",
+      "objective": "Oversæt mellem digital tid, sproglig tid og analog visning.",
+      "skills": ["digital-translation", "digital-analog-bridge"],
+      "taskDistribution": {
+        "translate_digital_to_spoken": 3,
+        "select_digital_time": 2,
+        "set_clock": 2,
+        "match_representation": 1
+      },
+      "requiredMastery": 82,
+      "difficultyBand": 6,
+      "totalTasks": 8
     }
   ]
 }

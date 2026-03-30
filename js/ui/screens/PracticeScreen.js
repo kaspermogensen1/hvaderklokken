@@ -47,9 +47,10 @@ export class PracticeScreen {
     topBar.append(title, streakUi);
     container.append(topBar);
 
-    const unlocked = this.app.missions.filter((mission) => this.app.state.missions[mission.id]?.status !== 'locked');
+    const activeTrack = this.app.state.learningPath?.activeTrack || 'analog';
+    const unlocked = this.app.missions.filter((mission) => mission.track === activeTrack && this.app.state.missions[mission.id]?.status !== 'locked');
     if (!unlocked.length) {
-      container.append(Object.assign(document.createElement('p'), {textContent: 'Start med mission 1 for at låse øvelser op.'}));
+      container.append(Object.assign(document.createElement('p'), {textContent: `Start med første mission i ${activeTrack === 'digital' ? 'det digitale' : 'det analoge'} spor for at låse øvelser op.`}));
       return;
     }
 
@@ -94,8 +95,10 @@ export class PracticeScreen {
 
   handleSubmit(answer, task, container) {
     const result = evaluateAnswer(task, answer);
-    triggerJuice(result.correct);
-    this.mascot.setEmotion(result.correct ? 'happy' : 'sad');
+    if (!result.skipped) {
+      triggerJuice(result.correct);
+      this.mascot.setEmotion(result.correct ? 'happy' : 'sad');
+    }
     this.feedback.innerHTML = '';
     this.feedback.className = result.correct ? 'feedback correct' : 'feedback incorrect';
     const main = document.createElement('p');
@@ -106,7 +109,9 @@ export class PracticeScreen {
 
     const advancePractice = () => {
       recordAttempt(task.id, task.missionId, result, result.misconceptionTags || [], this.app.state, task);
-      evaluateStreak(this.app.state, result.correct);
+      if (!result.skipped) {
+        evaluateStreak(this.app.state, result.correct);
+      }
       if (result.correct) {
         this.app.state.rewards.stars += 1;
       }

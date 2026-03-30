@@ -540,6 +540,15 @@ button:disabled, .card.locked button {
   padding: 4px;
 }
 
+.learn-track-switcher {
+  display: flex;
+  gap: 8px;
+  background: #f7fafc;
+  border-radius: 16px;
+  padding: 4px;
+  border: 1px solid #d7e3ef;
+}
+
 button.mode-pill,
 .lesson-chip,
 .lesson-mission-btn {
@@ -652,6 +661,12 @@ button.mode-pill.secondary {
 .lesson-chip.completed {
   border-color: var(--success);
   box-shadow: 0 4px 0 var(--success);
+}
+
+.lesson-chip.skipped {
+  border-color: var(--accent-strong);
+  box-shadow: 0 4px 0 var(--accent-strong);
+  background: #fff3eb;
 }
 
 .lesson-player {
@@ -800,6 +815,45 @@ button.mode-pill.secondary {
 
 .lesson-complete-card {
   gap: 14px;
+}
+
+.digital-time-input {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.digital-time-display {
+  border-radius: 24px;
+  border: 4px solid var(--focus);
+  background: #f6f9ff;
+  box-shadow: 0 8px 0 var(--focus);
+  color: var(--focus);
+  font-size: 2.3rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-align: center;
+  padding: 20px 16px;
+}
+
+.digital-time-hint {
+  text-align: center;
+  margin: 0;
+}
+
+.digital-time-keypad {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.digital-key {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 18px 12px;
+  font-size: 1.3rem;
 }
 
 .muted { color: var(--muted); }

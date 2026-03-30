@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.0.0';
+export const APP_VERSION = '2.1.1';
 export const STORAGE_KEY = 'klokkevaerk_state_v2';
 export const LEGACY_STORAGE_KEYS = ['klokkevaerk_state_v1'];
 
@@ -28,5 +28,11 @@ export const REVIEW_MISSION_TAG_MAP = {
   halv_to_misread: 'm2',
   quarter_past_to_confusion: 'm3',
   analog_digital_split: 'm6',
-  h24_context_error: 'm6'
+  h24_context_error: 'm6',
+  digital_hour_minute_order: 'dm1',
+  leading_zero_confusion: 'dm1',
+  before_after_reversal: 'dm3',
+  early_late_reversal: 'dm4',
+  day_segment_confusion: 'dm5',
+  digital_analog_bridge_confusion: 'dm6'
 };

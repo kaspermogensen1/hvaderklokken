@@ -60,8 +60,12 @@ export class ReviewScreen {
 
   handleSubmit(answer, task, container) {
     const result = evaluateAnswer(task, answer);
+    if (!result.skipped) {
+      this.feedback.className = result.correct ? 'feedback correct' : 'feedback incorrect';
+    } else {
+      this.feedback.className = 'feedback incorrect';
+    }
     this.feedback.innerHTML = '';
-    this.feedback.className = result.correct ? 'feedback correct' : 'feedback incorrect';
     const text = document.createElement('p');
     text.textContent = result.feedback?.message || (result.correct ? 'Godt gået' : 'Prøv igen.');
 

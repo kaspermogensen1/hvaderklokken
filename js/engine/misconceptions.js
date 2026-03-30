@@ -1,4 +1,9 @@
-import {fromCanonical} from './timeModel.js';
+import {
+  fromCanonical,
+  getDaySegment,
+  judgeEarlyLate,
+  toSpokenWithContext
+} from './timeModel.js';
 
 export const MISCONCEPTION_TAGS = [
   'minute-hour-confusion',
@@ -7,17 +12,16 @@ export const MISCONCEPTION_TAGS = [
   'halv_to_misread',
   'quarter_past_to_confusion',
   'analog_digital_split',
-  'h24_context_error'
+  'h24_context_error',
+  'digital_hour_minute_order',
+  'leading_zero_confusion',
+  'before_after_reversal',
+  'early_late_reversal',
+  'day_segment_confusion',
+  'digital_analog_bridge_confusion'
 ];
 
-export function classifyError(expected, actual, context = {}) {
-  if (!expected || !actual) {
-    return null;
-  }
-
-  const expectedTime = expected.totalMinutes != null ? fromCanonical(expected.totalMinutes) : null;
-  const actualTime = actual.totalMinutes != null ? fromCanonical(actual.totalMinutes) : null;
-
+function classifyAnalogError(expectedTime, actualTime, context) {
   if (!expectedTime || !actualTime) {
     return null;
   }
@@ -88,4 +92,95 @@ export function classifyError(expected, actual, context = {}) {
     messageId: 'h24_context_error',
     correctiveHint: 'Tænk på 12-timers og 24-timers former som samme øjeblik.'
   };
+}
+
+function classifyDigitalError(expected, actual, context) {
+  if (context.type === 'read_digital_time') {
+    return {
+      tag: expected?.totalMinutes != null && fromCanonical(expected.totalMinutes).h24 < 10 ? 'leading_zero_confusion' : 'digital_hour_minute_order',
+      messageId: 'digital_hour_minute_order',
+      correctiveHint: 'Tallene før kolon er timer. Tallene efter kolon er minutter.'
+    };
+  }
+
+  if (context.type === 'compare_times') {
+    return {
+      tag: 'before_after_reversal',
+      messageId: 'before_after_reversal',
+      correctiveHint: 'Se først på timerne. Hvis de er ens, sammenligner du minutterne.'
+    };
+  }
+
+  if (context.type === 'judge_early_late') {
+    return {
+      tag: 'early_late_reversal',
+      messageId: 'early_late_reversal',
+      correctiveHint: 'Før starttiden er tidligt. Efter starttiden er sent.'
+    };
+  }
+
+  if (context.type === 'classify_day_segment' || context.type === 'match_daily_context') {
+    return {
+      tag: 'day_segment_confusion',
+      messageId: 'day_segment_confusion',
+      correctiveHint: 'Brug dagens rytme: morgen, formiddag, eftermiddag og aften.'
+    };
+  }
+
+  if (context.type === 'translate_digital_to_spoken') {
+    return {
+      tag: 'digital_analog_bridge_confusion',
+      messageId: 'digital_analog_bridge_confusion',
+      correctiveHint: `${toSpokenWithContext(expected.totalMinutes)} er samme tidspunkt i både tale og tal.`
+    };
+  }
+
+  if (expected?.totalMinutes != null && actual?.totalMinutes != null) {
+    const expectedSegment = getDaySegment(expected.totalMinutes);
+    const actualSegment = getDaySegment(actual.totalMinutes);
+    if (expectedSegment !== actualSegment) {
+      return {
+        tag: 'day_segment_confusion',
+        messageId: 'day_segment_confusion',
+        correctiveHint: 'Se på hvilken del af dagen tidspunktet ligger i.'
+      };
+    }
+
+    if (judgeEarlyLate(actual.totalMinutes, expected.totalMinutes) !== 'Til tiden') {
+      return {
+        tag: 'before_after_reversal',
+        messageId: 'before_after_reversal',
+        correctiveHint: 'Sammenlign først timerne og derefter minutterne.'
+      };
+    }
+  }
+
+  return {
+    tag: 'digital_hour_minute_order',
+    messageId: 'digital_hour_minute_order',
+    correctiveHint: 'Timerne kommer før kolon. Minutterne kommer bagefter.'
+  };
+}
+
+export function classifyError(expected, actual, context = {}) {
+  if (context.track === 'digital' || String(context.type || '').startsWith('digital_') || [
+    'read_digital_time',
+    'set_digital_time',
+    'select_digital_time',
+    'compare_times',
+    'judge_early_late',
+    'classify_day_segment',
+    'match_daily_context',
+    'translate_digital_to_spoken'
+  ].includes(context.type)) {
+    return classifyDigitalError(expected, actual, context);
+  }
+
+  if (!expected || !actual) {
+    return null;
+  }
+
+  const expectedTime = expected.totalMinutes != null ? fromCanonical(expected.totalMinutes) : null;
+  const actualTime = actual.totalMinutes != null ? fromCanonical(actual.totalMinutes) : null;
+  return classifyAnalogError(expectedTime, actualTime, context);
 }

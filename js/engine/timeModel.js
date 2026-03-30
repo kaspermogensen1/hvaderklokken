@@ -14,6 +14,14 @@ const HOUR_WORDS = {
   12: 'tolv'
 };
 
+export const DAY_SEGMENTS = [
+  {key: 'nat', label: 'Nat', phrase: 'om natten', start: 0, end: 299},
+  {key: 'morgen', label: 'Morgen', phrase: 'om morgenen', start: 300, end: 539},
+  {key: 'formiddag', label: 'Formiddag', phrase: 'om formiddagen', start: 540, end: 719},
+  {key: 'eftermiddag', label: 'Eftermiddag', phrase: 'om eftermiddagen', start: 720, end: 1019},
+  {key: 'aften', label: 'Aften', phrase: 'om aftenen', start: 1020, end: 1439}
+];
+
 const normalize24 = (hours24) => {
   const wrapped = ((hours24 % 24) + 24) % 24;
   return wrapped;
@@ -24,7 +32,7 @@ const normalizeMinutes = (minutes) => {
   return wrapped;
 };
 
-const normalizeTotal = (totalMinutes) => {
+export const normalizeTotalMinutes = (totalMinutes) => {
   const wrapped = ((totalMinutes % 1440) + 1440) % 1440;
   return wrapped;
 };
@@ -41,7 +49,7 @@ export function toCanonical(hours24, minutes) {
 }
 
 export function fromCanonical(totalMinutes) {
-  const total = normalizeTotal(totalMinutes);
+  const total = normalizeTotalMinutes(totalMinutes);
   const h24 = Math.floor(total / 60);
   const m = total % 60;
   const h12 = h24 % 12;
@@ -56,7 +64,7 @@ export function fromCanonical(totalMinutes) {
 }
 
 export function anglesFromTime(totalMinutes) {
-  const canon = normalizeTotal(totalMinutes);
+  const canon = normalizeTotalMinutes(totalMinutes);
   const {h24, m} = fromCanonical(canon);
   const h12Zero = h24 % 12;
   const minuteDeg = (m * 6) % 360;
@@ -93,8 +101,27 @@ export function toDigital24(totalMinutes, withLeadingZero = false) {
   return `${hour}:${String(m).padStart(2, '0')}`;
 }
 
+export function parseDigitalTime(value) {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const match = value.trim().match(/^(\d{2}):(\d{2})$/);
+  if (!match) {
+    return null;
+  }
+
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (Number.isNaN(hours) || Number.isNaN(minutes) || hours > 23 || minutes > 59) {
+    return null;
+  }
+
+  return toCanonical(hours, minutes);
+}
+
 export function toDanishPhrase(totalMinutes) {
-  const canon = normalizeTotal(totalMinutes);
+  const canon = normalizeTotalMinutes(totalMinutes);
   const {h24, m} = fromCanonical(canon);
   const hour = h24 % 12;
   const hourWord = HOUR_WORDS[hour === 0 ? 12 : hour];
@@ -123,6 +150,42 @@ export function toDanishPhrase(totalMinutes) {
 
   const before = 60 - m;
   return `${before} minutter i ${nextHourWord}`;
+}
+
+export function getDaySegmentInfo(totalMinutes) {
+  const canonical = normalizeTotalMinutes(totalMinutes);
+  return DAY_SEGMENTS.find((segment) => canonical >= segment.start && canonical <= segment.end) || DAY_SEGMENTS[0];
+}
+
+export function getDaySegment(totalMinutes) {
+  return getDaySegmentInfo(totalMinutes).key;
+}
+
+export function getDaySegmentLabel(totalMinutes, mode = 'label') {
+  const segment = getDaySegmentInfo(totalMinutes);
+  return mode === 'phrase' ? segment.phrase : segment.label;
+}
+
+export function toSpokenWithContext(totalMinutes) {
+  return `${toDanishPhrase(totalMinutes)} ${getDaySegmentLabel(totalMinutes, 'phrase')}`;
+}
+
+export function differenceInMinutes(left, right) {
+  return normalizeTotalMinutes(left) - normalizeTotalMinutes(right);
+}
+
+export function compareMoments(left, right) {
+  if (left === right) {
+    return 'Samme tid';
+  }
+  return left < right ? 'Før' : 'Efter';
+}
+
+export function judgeEarlyLate(actual, target) {
+  if (actual === target) {
+    return 'Til tiden';
+  }
+  return actual < target ? 'Tidligt' : 'Sent';
 }
 
 export function parseDanishPhrase(phrase) {

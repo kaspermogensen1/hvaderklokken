@@ -1,17 +1,7 @@
-import {toDigital12, toDigital24, toDanishPhrase} from '../../engine/timeModel.js';
+import {toDigital12, toDigital24, toDanishPhrase, getDaySegmentLabel} from '../../engine/timeModel.js';
 
 export function dayContext(totalMinutes) {
-  const hours = Math.floor(totalMinutes / 60);
-  if (hours < 5) {
-    return 'om natten';
-  }
-  if (hours < 12) {
-    return 'om morgenen';
-  }
-  if (hours < 18) {
-    return 'om eftermiddagen';
-  }
-  return 'om aftenen';
+  return getDaySegmentLabel(totalMinutes, 'phrase');
 }
 
 function createChip(label) {
