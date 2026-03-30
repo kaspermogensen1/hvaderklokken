@@ -14,6 +14,7 @@
   position: relative;
   touch-action: none;
   user-select: none;
+  overflow: hidden;
 }
 
 .clock-number {
@@ -26,6 +27,14 @@
   color: #1a4a72;
   font-weight: 700;
   font-size: 1.15rem;
+  border-radius: 999px;
+  z-index: 5;
+}
+
+.clock-number.highlighted {
+  background: rgba(47, 99, 255, 0.18);
+  color: #113d88;
+  box-shadow: 0 0 0 6px rgba(47, 99, 255, 0.08);
 }
 
 .clock-hand {
@@ -35,6 +44,7 @@
   transform-origin: 50% 100%;
   border-radius: 999px;
   cursor: grab;
+  z-index: 8;
 }
 
 .clock-hand.hour {
@@ -49,6 +59,31 @@
   height: 128px;
   background: #c64f2d;
   transition: transform 0.08s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.clock-hand.highlighted {
+  box-shadow: 0 0 0 10px rgba(47, 99, 255, 0.12);
+}
+
+.clock-hand.disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.clock-hand.ghost {
+  opacity: 0.45;
+  pointer-events: none;
+  display: none;
+}
+
+.clock-hand.ghost.hour {
+  background: rgba(47, 99, 255, 0.2);
+  border: 2px dashed rgba(47, 99, 255, 0.55);
+}
+
+.clock-hand.ghost.minute {
+  background: rgba(198, 79, 45, 0.14);
+  border: 2px dashed rgba(198, 79, 45, 0.55);
 }
 
 .clock-center {
@@ -72,18 +107,53 @@
   opacity: 0.6;
 }
 
+.helper-sector {
+  position: absolute;
+  inset: 12px;
+  border-radius: 50%;
+  display: none;
+  z-index: 1;
+}
+
 .helper-layer.five {
   background:
-    repeating-conic-gradient(from -90deg, #d5e7ff 0 12deg, transparent 0 30deg);
+    repeating-conic-gradient(from -85deg, #c8ddfa 0 20deg, transparent 0 30deg);
+  -webkit-mask-image: radial-gradient(circle, transparent 55%, black 62%);
+  mask-image: radial-gradient(circle, transparent 55%, black 62%);
 }
 
 .helper-layer.quarters {
   background:
-    repeating-conic-gradient(from -90deg, transparent 0 90deg, rgba(255, 174, 103, 0.22) 90deg 180deg);
+    repeating-conic-gradient(from -45deg, transparent 0 90deg, rgba(255, 174, 103, 0.18) 90deg 180deg);
+  -webkit-mask-image: radial-gradient(circle, transparent 55%, black 62%);
+  mask-image: radial-gradient(circle, transparent 55%, black 62%);
+}
+
+.minute-label-layer {
+  position: absolute;
+  inset: 0;
+  display: none;
+  z-index: 3;
+}
+
+.minute-label {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #4d7095;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 0.12rem 0.35rem;
+  border-radius: 999px;
+  box-shadow: 0 4px 10px rgba(21, 51, 74, 0.08);
 }
 
 @media (max-width: 680px) {
   .clock-wrap {
     --size: 320px;
+  }
+
+  .minute-label {
+    font-size: 0.78rem;
   }
 }

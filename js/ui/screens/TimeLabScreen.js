@@ -1,24 +1,7 @@
 import {STRINGS} from '../../copy.js';
 import {ClockCanvas} from '../components/ClockCanvas.js';
-import {toDigital12, toDigital24, toDanishPhrase} from '../../engine/timeModel.js';
-
-function dayContext(totalMinutes) {
-  const hours = Math.floor(totalMinutes / 60);
-  if (hours < 5) {
-    return 'om natten';
-  }
-  if (hours < 12) {
-    return 'om morgenen';
-  }
-  if (hours < 18) {
-    return 'om eftermiddagen';
-  }
-  return 'om aftenen';
-}
-
-function labReadout(totalMinutes) {
-  return `${toDigital12(totalMinutes, true)} · ${toDigital24(totalMinutes, true)} · ${toDanishPhrase(totalMinutes)} ${dayContext(totalMinutes)}`;
-}
+import {toDigital24, toDanishPhrase} from '../../engine/timeModel.js';
+import {createTimeReadout} from '../components/TimeReadout.js';
 
 export class TimeLabScreen {
   constructor(app) {
@@ -73,7 +56,12 @@ export class TimeLabScreen {
     const clockWrap = document.createElement('div');
     clockWrap.className = 'clock-wrap';
 
-    const reads = document.createElement('p');
+    const readout = createTimeReadout({
+      digital12: true,
+      digital24: true,
+      spoken: true,
+      context: true
+    });
 
     const controls = document.createElement('div');
     controls.className = 'toolbar';
@@ -107,9 +95,9 @@ export class TimeLabScreen {
       initialTime: 0,
       interactive: true,
       showHelpers: true,
-      onChange: ({totalMinutes, digital12, digital24, phrase: spoken}) => {
+      onChange: ({totalMinutes}) => {
         clockInput.value = toDigital24(totalMinutes, true);
-        reads.textContent = `${digital12} · ${digital24} · ${spoken} ${dayContext(totalMinutes)}`;
+        readout.update(totalMinutes);
       }
     });
 
@@ -119,13 +107,12 @@ export class TimeLabScreen {
     });
 
     clockInput.value = toDigital24(this.clock.getCanonicalTime(), true);
-    reads.textContent = labReadout(this.clock.getCanonicalTime());
+    readout.update(this.clock.getCanonicalTime());
 
     clockInput.addEventListener('change', () => {
       const [h, m] = clockInput.value.split(':').map((item) => Number(item));
       const total = (isNaN(h) || isNaN(m)) ? 0 : (h * 60 + m);
       this.clock.setCanonical(total);
-      reads.textContent = labReadout(total);
     });
 
     phrase.addEventListener('change', () => {
@@ -144,7 +131,7 @@ export class TimeLabScreen {
       this.clock.setCanonical(total);
     });
 
-    root.append(title, hint, clockWrap, reads, controls);
+    root.append(title, hint, clockWrap, readout.el, controls);
     container.innerHTML = '';
     container.append(root);
   }

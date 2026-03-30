@@ -6,6 +6,16 @@ const SNAP_MAP = {
   exact: 1
 };
 
+const DEFAULT_TEACHING_STATE = {
+  allowedHands: ['hour', 'minute'],
+  highlightedHands: [],
+  highlightedNumbers: [],
+  showMinuteLabels: false,
+  targetTime: null,
+  sector: null,
+  demo: null
+};
+
 export class ClockCanvas {
   constructor(root, options = {}) {
     this.root = root;
@@ -15,12 +25,17 @@ export class ClockCanvas {
     this.snapMode = options.snapMode || 'exact';
     this.currentCanonical = 0;
     this.dragging = null;
-    this.lastMinuteIndex = 0;
+    this.teachingState = {...DEFAULT_TEACHING_STATE};
+    this.demoTimer = null;
+    this.allowedHands = new Set(DEFAULT_TEACHING_STATE.allowedHands);
+    this.numberEls = [];
+    this.minuteLabelEls = [];
 
     this._build();
     this.setCanonical(typeof options.initialTime === 'number' ? options.initialTime : 0, false);
     this.setHelpers(this.showHelpers);
     this._setInteractive(this.interactive);
+    this.setTeachingState(options.teachingState || {});
   }
 
   _build() {
@@ -36,6 +51,18 @@ export class ClockCanvas {
     quarterLayer.className = 'helper-layer quarters';
     quarterLayer.dataset.layer = 'quarters';
 
+    const sectorLayer = document.createElement('div');
+    sectorLayer.className = 'helper-sector';
+
+    const minuteLabelLayer = document.createElement('div');
+    minuteLabelLayer.className = 'minute-label-layer';
+
+    const ghostHourHand = document.createElement('div');
+    ghostHourHand.className = 'clock-hand ghost hour';
+
+    const ghostMinuteHand = document.createElement('div');
+    ghostMinuteHand.className = 'clock-hand ghost minute';
+
     const hourHand = document.createElement('div');
     hourHand.className = 'clock-hand hour';
     hourHand.dataset.hand = 'hour';
@@ -50,9 +77,9 @@ export class ClockCanvas {
     for (let i = 1; i <= 12; i += 1) {
       const label = document.createElement('div');
       label.className = 'clock-number';
+      label.dataset.number = String(i);
       const angle = ((i % 12) * 30 - 90) * (Math.PI / 180);
       const radius = 48;
-      const size = 64;
       const x = 50 + Math.cos(angle) * radius;
       const y = 50 + Math.sin(angle) * radius;
       label.style.left = `${x}%`;
@@ -60,16 +87,46 @@ export class ClockCanvas {
       label.style.transform = 'translate(-50%, -50%)';
       label.textContent = i.toString();
       shell.appendChild(label);
+      this.numberEls.push(label);
     }
 
-    shell.append(fiveLayer, quarterLayer, hourHand, minuteHand, center);
+    for (let i = 0; i < 12; i += 1) {
+      const minuteValue = i === 0 ? 0 : i * 5;
+      const label = document.createElement('div');
+      label.className = 'minute-label';
+      const angle = (i * 30 - 90) * (Math.PI / 180);
+      const radius = 39;
+      const x = 50 + Math.cos(angle) * radius;
+      const y = 50 + Math.sin(angle) * radius;
+      label.style.left = `${x}%`;
+      label.style.top = `${y}%`;
+      label.textContent = String(minuteValue).padStart(2, '0');
+      minuteLabelLayer.appendChild(label);
+      this.minuteLabelEls.push(label);
+    }
+
+    shell.append(
+      fiveLayer,
+      quarterLayer,
+      sectorLayer,
+      minuteLabelLayer,
+      ghostHourHand,
+      ghostMinuteHand,
+      hourHand,
+      minuteHand,
+      center
+    );
     this.root.appendChild(shell);
 
     this.shell = shell;
     this.hourHand = hourHand;
     this.minuteHand = minuteHand;
+    this.ghostHourHand = ghostHourHand;
+    this.ghostMinuteHand = ghostMinuteHand;
     this.fiveLayer = fiveLayer;
     this.quartersLayer = quarterLayer;
+    this.sectorLayer = sectorLayer;
+    this.minuteLabelLayer = minuteLabelLayer;
 
     this.pointerMove = this._onPointerMove.bind(this);
     this.pointerUp = this._onPointerUp.bind(this);
@@ -81,12 +138,18 @@ export class ClockCanvas {
     }
 
     if (!enabled) {
+      this.shell.dataset.interactive = 'false';
       return;
     }
 
+    this.shell.dataset.interactive = 'true';
+
     const onDown = (event) => {
       const hand = event.target.closest('.clock-hand');
-      if (!hand) {
+      if (!hand || !hand.dataset.hand) {
+        return;
+      }
+      if (!this.allowedHands.has(hand.dataset.hand)) {
         return;
       }
 
@@ -140,8 +203,7 @@ export class ClockCanvas {
   _setMinuteFromAngle(angle) {
     const floatMinute = angle / 6;
     let baseMinute = Math.round(floatMinute) % 60;
-    
-    // Magnetic snap to multiples of 5 within a tight radius (e.g., 1.2 minutes)
+
     const nearest5 = Math.round(floatMinute / 5) * 5;
     if (Math.abs(floatMinute - nearest5) < 1.2) {
       baseMinute = nearest5 % 60;
@@ -165,14 +227,13 @@ export class ClockCanvas {
     const minute = this.currentCanonical % 60;
     const current = fromCanonical(this.currentCanonical);
     const currentPeriod = current.h24 >= 12 ? 12 : 0;
-    
+
     const floatHour = (((angle % 360) + 360) % 360) / 30;
     let rawHour = Math.floor(floatHour) % 12;
-    
-    // Magnetic snap to exact hour if very close (e.g., 0.15 of an hour = 9 minutes)
+
     const nearestHour = Math.round(floatHour);
     if (Math.abs(floatHour - nearestHour) < 0.15) {
-       rawHour = nearestHour % 12;
+      rawHour = nearestHour % 12;
     }
 
     const mappedHour = (currentPeriod + rawHour) % 24;
@@ -184,6 +245,75 @@ export class ClockCanvas {
     const {hourDeg, minuteDeg} = anglesFromTime(this.currentCanonical);
     this.hourHand.style.transform = `translate(-50%, -100%) rotate(${hourDeg}deg)`;
     this.minuteHand.style.transform = `translate(-50%, -100%) rotate(${minuteDeg}deg)`;
+  }
+
+  _syncGhostHands(totalMinutes) {
+    if (typeof totalMinutes !== 'number') {
+      this.ghostHourHand.style.display = 'none';
+      this.ghostMinuteHand.style.display = 'none';
+      return;
+    }
+
+    const {hourDeg, minuteDeg} = anglesFromTime(totalMinutes);
+    this.ghostHourHand.style.display = 'block';
+    this.ghostMinuteHand.style.display = 'block';
+    this.ghostHourHand.style.transform = `translate(-50%, -100%) rotate(${hourDeg}deg)`;
+    this.ghostMinuteHand.style.transform = `translate(-50%, -100%) rotate(${minuteDeg}deg)`;
+  }
+
+  _syncSector(sector) {
+    if (!sector) {
+      this.sectorLayer.style.display = 'none';
+      this.sectorLayer.style.background = 'none';
+      return;
+    }
+
+    let startDeg = (sector.startMinute || 0) * 6;
+    let endDeg = (sector.endMinute || 0) * 6;
+    if (endDeg <= startDeg) {
+      endDeg += 360;
+    }
+    const color = sector.color || 'rgba(47, 99, 255, 0.16)';
+    this.sectorLayer.style.display = 'block';
+    this.sectorLayer.style.background = `conic-gradient(from ${startDeg - 90}deg, ${color} 0deg ${endDeg - startDeg}deg, transparent ${endDeg - startDeg}deg 360deg)`;
+  }
+
+  _applyTeachingState() {
+    const state = this.teachingState || DEFAULT_TEACHING_STATE;
+    this.allowedHands = new Set(state.allowedHands?.length ? state.allowedHands : DEFAULT_TEACHING_STATE.allowedHands);
+
+    this.hourHand.classList.toggle('highlighted', state.highlightedHands?.includes('hour'));
+    this.minuteHand.classList.toggle('highlighted', state.highlightedHands?.includes('minute'));
+    this.hourHand.classList.toggle('disabled', !this.allowedHands.has('hour'));
+    this.minuteHand.classList.toggle('disabled', !this.allowedHands.has('minute'));
+
+    this.numberEls.forEach((el) => {
+      const number = Number(el.dataset.number);
+      el.classList.toggle('highlighted', state.highlightedNumbers?.includes(number));
+    });
+
+    this.minuteLabelLayer.style.display = state.showMinuteLabels ? 'block' : 'none';
+    this._syncGhostHands(state.targetTime);
+    this._syncSector(state.sector);
+    this._runDemo(state.demo);
+  }
+
+  _runDemo(demo) {
+    if (this.demoTimer) {
+      window.clearInterval(this.demoTimer);
+      this.demoTimer = null;
+    }
+
+    if (!demo || !Array.isArray(demo.times) || demo.times.length < 2) {
+      return;
+    }
+
+    let index = 0;
+    this.setCanonical(demo.times[0], true);
+    this.demoTimer = window.setInterval(() => {
+      index = (index + 1) % demo.times.length;
+      this.setCanonical(demo.times[index], true);
+    }, demo.intervalMs || 1200);
   }
 
   _emitChange() {
@@ -200,6 +330,15 @@ export class ClockCanvas {
     this.showHelpers = show;
     this.fiveLayer.style.display = show ? 'block' : 'none';
     this.quartersLayer.style.display = show ? 'block' : 'none';
+  }
+
+  setTeachingState(nextState = {}) {
+    this.teachingState = {
+      ...DEFAULT_TEACHING_STATE,
+      ...this.teachingState,
+      ...nextState
+    };
+    this._applyTeachingState();
   }
 
   setCanonical(totalMinutes, emit = true) {
@@ -228,6 +367,9 @@ export class ClockCanvas {
   destroy() {
     if (this._cleanup) {
       this._cleanup();
+    }
+    if (this.demoTimer) {
+      window.clearInterval(this.demoTimer);
     }
     this.root.innerHTML = '';
   }

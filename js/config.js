@@ -1,5 +1,6 @@
-export const APP_VERSION = '1.0.0';
-export const STORAGE_KEY = 'klokkevaerk_state_v1';
+export const APP_VERSION = '2.0.0';
+export const STORAGE_KEY = 'klokkevaerk_state_v2';
+export const LEGACY_STORAGE_KEYS = ['klokkevaerk_state_v1'];
 
 export const ROUTES = {
   home: '#/',
