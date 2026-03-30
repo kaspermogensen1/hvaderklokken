@@ -24,9 +24,37 @@ function isValidNextDigit(currentDigits, digit) {
   return next.length <= 4;
 }
 
-function formatDigits(digits) {
-  const padded = digits.padEnd(4, '_');
-  return `${padded.slice(0, 2)}:${padded.slice(2, 4)}`;
+function renderDisplay(display, digits) {
+  display.innerHTML = '';
+
+  const chars = digits.padEnd(4, '_');
+  const positions = [0, 1, 'colon', 2, 3];
+
+  positions.forEach((pos) => {
+    if (pos === 'colon') {
+      const colon = document.createElement('span');
+      colon.textContent = ':';
+      colon.className = digits.length >= 2 ? 'digit-filled' : 'digit-placeholder';
+      display.append(colon);
+      return;
+    }
+
+    const span = document.createElement('span');
+    const ch = chars[pos];
+
+    if (pos < digits.length) {
+      span.textContent = ch;
+      span.className = 'digit-filled';
+    } else if (pos === digits.length) {
+      span.textContent = '_';
+      span.className = 'digit-cursor';
+    } else {
+      span.textContent = '_';
+      span.className = 'digit-placeholder';
+    }
+
+    display.append(span);
+  });
 }
 
 export function createDigitalTimeInput(options = {}) {
@@ -46,13 +74,17 @@ export function createDigitalTimeInput(options = {}) {
 
   const hint = document.createElement('p');
   hint.className = 'muted digital-time-hint';
-  hint.textContent = 'Skriv tiden med timer først og minutter bagefter.';
+  hint.textContent = 'Skriv tiden — timer først, så minutter.';
 
   const keypad = document.createElement('div');
   keypad.className = 'digital-time-keypad';
 
+  const keyButtons = {};
+
   const emitChange = () => {
-    display.textContent = formatDigits(digits);
+    renderDisplay(display, digits);
+    updateKeyStates();
+
     const totalMinutes = digits.length === 4
       ? (Number(digits.slice(0, 2)) * 60) + Number(digits.slice(2, 4))
       : null;
@@ -60,14 +92,38 @@ export function createDigitalTimeInput(options = {}) {
     if (typeof config.onChange === 'function') {
       config.onChange({
         digits,
-        value: digits.length === 4 ? formatDigits(digits) : '',
+        value: digits.length === 4 ? `${digits.slice(0, 2)}:${digits.slice(2, 4)}` : '',
         totalMinutes
       });
     }
   };
 
+  const updateKeyStates = () => {
+    for (let d = 0; d <= 9; d++) {
+      const btn = keyButtons[String(d)];
+      if (!btn) continue;
+
+      if (digits.length >= 4 || !isValidNextDigit(digits, String(d))) {
+        btn.classList.add('disabled-key');
+      } else {
+        btn.classList.remove('disabled-key');
+      }
+    }
+  };
+
+  const shakeDisplay = () => {
+    display.classList.remove('shake');
+    void display.offsetWidth;
+    display.classList.add('shake');
+  };
+
   const pressDigit = (digit) => {
-    if (digits.length >= 4 || !isValidNextDigit(digits, digit)) {
+    if (digits.length >= 4) {
+      shakeDisplay();
+      return;
+    }
+    if (!isValidNextDigit(digits, digit)) {
+      shakeDisplay();
       return;
     }
     digits += digit;
@@ -80,11 +136,12 @@ export function createDigitalTimeInput(options = {}) {
   };
 
   const backspace = () => {
+    if (digits.length === 0) return;
     digits = digits.slice(0, -1);
     emitChange();
   };
 
-  ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'Ryd', '0', 'Slet'].forEach((label) => {
+  ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'Ryd', '0', '⌫'].forEach((label) => {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'digital-key';
@@ -93,10 +150,11 @@ export function createDigitalTimeInput(options = {}) {
     if (label === 'Ryd') {
       btn.classList.add('secondary');
       btn.addEventListener('click', clearDigits);
-    } else if (label === 'Slet') {
+    } else if (label === '⌫') {
       btn.classList.add('secondary');
       btn.addEventListener('click', backspace);
     } else {
+      keyButtons[label] = btn;
       btn.addEventListener('click', () => pressDigit(label));
     }
 
@@ -114,7 +172,7 @@ export function createDigitalTimeInput(options = {}) {
         : null;
     },
     getValue() {
-      return digits.length === 4 ? formatDigits(digits) : '';
+      return digits.length === 4 ? `${digits.slice(0, 2)}:${digits.slice(2, 4)}` : '';
     },
     setTime(totalMinutes) {
       digits = typeof totalMinutes === 'number' ? digitsFromTime(totalMinutes) : '';

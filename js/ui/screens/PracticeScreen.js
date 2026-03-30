@@ -32,45 +32,62 @@ export class PracticeScreen {
     this.destroy();
     container.innerHTML = '';
 
-    const title = document.createElement('h2');
-    title.textContent = STRINGS.mode.practice;
-
-    const topBar = document.createElement('div');
-    topBar.style.display = 'flex';
-    topBar.style.justifyContent = 'space-between';
-    topBar.style.alignItems = 'center';
-    
-    const streakUi = document.createElement('div');
-    streakUi.className = `streak-counter ${this.app.state.streaks.current >= 3 ? 'hot' : ''}`;
-    streakUi.textContent = this.app.state.streaks.current >= 3 ? `🔥 x${this.app.state.streaks.current}` : '';
-    
-    topBar.append(title, streakUi);
-    container.append(topBar);
-
     const activeTrack = this.app.state.learningPath?.activeTrack || 'analog';
     const unlocked = this.app.missions.filter((mission) => mission.track === activeTrack && this.app.state.missions[mission.id]?.status !== 'locked');
+
     if (!unlocked.length) {
-      container.append(Object.assign(document.createElement('p'), {textContent: `Start med første mission i ${activeTrack === 'digital' ? 'det digitale' : 'det analoge'} spor for at låse øvelser op.`}));
+      const empty = document.createElement('div');
+      empty.className = 'practice-done-card';
+      empty.innerHTML = `<h3>${activeTrack === 'digital' ? '🖥️' : '🕐'} ${STRINGS.mode.practice}</h3>`;
+      const msg = document.createElement('p');
+      msg.className = 'muted';
+      msg.textContent = `Start med første mission i ${activeTrack === 'digital' ? 'det digitale' : 'det analoge'} spor for at låse øvelser op.`;
+      empty.append(msg);
+      container.append(empty);
       return;
     }
 
     if (this.currentTaskIndex >= this.maxTasks) {
-      const done = document.createElement('p');
-      done.textContent = 'Godt løst!';
+      const done = document.createElement('div');
+      done.className = 'practice-done-card';
+      done.innerHTML = '<h3>Godt klaret! 🎉</h3>';
+      const summary = document.createElement('p');
+      summary.className = 'muted';
+      summary.textContent = `Du har gennemført ${this.maxTasks} opgaver.`;
       const again = document.createElement('button');
       again.textContent = STRINGS.common.retry;
       again.type = 'button';
       again.className = 'secondary';
+      again.style.marginTop = '1rem';
       again.addEventListener('click', () => {
         this.currentTaskIndex = 0;
         this.render(container);
       });
-      container.append(done, again);
+      done.append(summary, again);
+      container.append(done);
       return;
     }
 
+    // Header with title and streak
+    const header = document.createElement('div');
+    header.className = 'practice-header';
+
+    const title = document.createElement('h2');
+    title.textContent = STRINGS.mode.practice;
+
+    header.append(title);
+
+    if (this.app.state.streaks.current >= 3) {
+      const streakBadge = document.createElement('span');
+      streakBadge.className = 'streak-badge';
+      streakBadge.textContent = `🔥 x${this.app.state.streaks.current}`;
+      header.append(streakBadge);
+    }
+
+    // Progress bar
     const progress = createProgressBar(this.currentTaskIndex, this.maxTasks);
 
+    // Generate task
     const missionChoice = [...unlocked].sort((left, right) => {
       const leftScore = this.app.state.missions[left.id]?.masteryScore || 0;
       const rightScore = this.app.state.missions[right.id]?.masteryScore || 0;
@@ -89,7 +106,7 @@ export class PracticeScreen {
 
     this.cleanup = taskResult?.cleanup;
     this.feedback = document.createElement('div');
-    container.append(progress, wrapper, this.feedback);
+    container.append(header, progress, wrapper, this.feedback);
     if (!this.mascot.el.parentNode) container.append(this.mascot.el);
   }
 
@@ -102,7 +119,7 @@ export class PracticeScreen {
     this.feedback.innerHTML = '';
     this.feedback.className = result.correct ? 'feedback correct' : 'feedback incorrect';
     const main = document.createElement('p');
-    main.textContent = result.feedback?.message || (result.correct ? 'Godt gået' : 'Prøv igen.');
+    main.textContent = result.feedback?.message || (result.correct ? 'Godt gået! 👏' : 'Ikke helt rigtigt.');
     const hint = document.createElement('p');
     hint.className = 'muted';
     hint.textContent = result.feedback?.misconceptionHint || '';

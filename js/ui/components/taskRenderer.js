@@ -10,6 +10,30 @@ export function mountTask({mount, task, state, onSubmit}) {
   const prompt = document.createElement('div');
   prompt.className = 'prompt';
   prompt.textContent = task.promptText;
+
+  // Add TTS replay button for the prompt
+  if (window.speechSynthesis) {
+    const listenBtn = document.createElement('button');
+    listenBtn.type = 'button';
+    listenBtn.className = 'tts-btn';
+    listenBtn.textContent = '🔊';
+    listenBtn.setAttribute('aria-label', 'Læs op');
+    listenBtn.style.marginLeft = '8px';
+    listenBtn.style.verticalAlign = 'middle';
+    listenBtn.style.display = 'inline-flex';
+    listenBtn.addEventListener('click', () => {
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(task.promptText);
+      u.lang = 'da-DK';
+      u.rate = 0.9;
+      u.onstart = () => listenBtn.classList.add('speaking');
+      u.onend = () => listenBtn.classList.remove('speaking');
+      u.onerror = () => listenBtn.classList.remove('speaking');
+      window.speechSynthesis.speak(u);
+    });
+    prompt.append(listenBtn);
+  }
+
   wrapper.append(prompt);
 
   let clock = null;
@@ -133,7 +157,7 @@ export function mountTask({mount, task, state, onSubmit}) {
   if (task.answerMode === 'clock' || task.answerMode === 'digital_input') {
     const checkBtn = document.createElement('button');
     checkBtn.type = 'button';
-    checkBtn.textContent = 'Tjek svar';
+    checkBtn.textContent = 'Tjek svar ✓';
     checkBtn.addEventListener('click', handleCheck);
     actionRow.append(checkBtn);
   }
@@ -141,7 +165,8 @@ export function mountTask({mount, task, state, onSubmit}) {
   const skip = document.createElement('button');
   skip.type = 'button';
   skip.className = 'secondary';
-  skip.textContent = 'Spring opgaven over';
+  skip.textContent = 'Spring over →';
+  skip.style.fontSize = '0.9rem';
   skip.addEventListener('click', () => {
     onSubmit?.({skipped: true}, task, clock);
   });

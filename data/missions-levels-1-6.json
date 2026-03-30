@@ -127,8 +127,9 @@
       "skills": ["digital-patterns", "quarter-patterns"],
       "taskDistribution": {
         "read_digital_time": 2,
-        "select_digital_time": 3,
-        "translate_digital_to_spoken": 3
+        "select_digital_time": 2,
+        "set_digital_time": 2,
+        "translate_digital_to_spoken": 2
       },
       "requiredMastery": 74,
       "difficultyBand": 2,
@@ -188,9 +189,10 @@
       "objective": "Oversæt mellem digital tid, sproglig tid og analog visning.",
       "skills": ["digital-translation", "digital-analog-bridge"],
       "taskDistribution": {
-        "translate_digital_to_spoken": 3,
+        "translate_digital_to_spoken": 2,
         "select_digital_time": 2,
-        "set_clock": 2,
+        "set_digital_time": 2,
+        "set_clock": 1,
         "match_representation": 1
       },
       "requiredMastery": 82,
