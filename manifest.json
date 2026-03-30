@@ -1,0 +1,17 @@
+{
+  "name": "Klokkemester",
+  "short_name": "Klokkemester",
+  "description": "Interaktiv tidsforståelse for børn",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f0f4f8",
+  "theme_color": "#1a4a72",
+  "icons": [
+    {
+      "src": "./assets/logo.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

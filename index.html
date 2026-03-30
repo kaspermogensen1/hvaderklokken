@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="da">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#1a4a72" />
+    <title>Klokkemester For Kids</title>
+    <link rel="icon" href="./assets/logo.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./assets/logo.svg" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="./manifest.json" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./css/reset.css?v=5" />
+    <link rel="stylesheet" href="./css/styles.css?v=5" />
+    <link rel="stylesheet" href="./css/clock.css?v=5" />
+    <link rel="stylesheet" href="./css/motion.css?v=5" />
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  </head>
+  <body>
+    <!-- Fullscreen App Shell -->
+    <div class="ipad-shell">
+      
+      <!-- Top Header (Star Counter & Store) -->
+      <header class="ipad-header">
+        <img src="./assets/logo.svg" class="app-logo" alt="Logo" />
+        <div class="header-titles">
+          <h1>Klokkemester</h1>
+        </div>
+        <div style="display: flex; gap: 12px;">
+          <button id="tts-toggle" class="pill-btn store-btn">🔊</button>
+          <button id="theme-btn" class="pill-btn store-btn">⭐ <span id="star-count">0</span></button>
+        </div>
+      </header>
+
+      <!-- Scrollable Content Area -->
+      <main id="app-root" class="ipad-content"></main>
+
+      <!-- Bottom Tab Navigation -->
+      <nav class="ipad-tab-bar" aria-label="Primære funktioner">
+        <a href="#/" class="tab-item" data-route="home">
+          <span class="tab-icon">🏠</span>
+          <span class="tab-label">Hjem</span>
+        </a>
+        <a href="#/learn" class="tab-item" data-route="learn">
+          <span class="tab-icon">🎮</span>
+          <span class="tab-label">Spil</span>
+        </a>
+        <a href="#/practice" class="tab-item" data-route="practice">
+          <span class="tab-icon">🕹️</span>
+          <span class="tab-label">Øv</span>
+        </a>
+        <a href="#/lab" class="tab-item" data-route="lab">
+          <span class="tab-icon">🔬</span>
+          <span class="tab-label">Lab</span>
+        </a>
+      </nav>
+
+    </div>
+    <script type="module" src="./js/main.js"></script>
+  </body>
+</html>

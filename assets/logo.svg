@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Klokkemester logo">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#ffcf77"/>
+      <stop offset="100%" stop-color="#ff8e67"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="#15334a"/>
+  <circle cx="64" cy="64" r="44" fill="url(#bg)"/>
+  <circle cx="64" cy="64" r="34" fill="#fffaf2"/>
+  <line x1="64" y1="64" x2="64" y2="38" stroke="#214d72" stroke-width="7" stroke-linecap="round"/>
+  <line x1="64" y1="64" x2="84" y2="72" stroke="#d05c38" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="64" cy="64" r="5" fill="#15334a"/>
+  <text x="64" y="111" text-anchor="middle" font-size="14" font-family="Trebuchet MS, Arial, sans-serif" fill="#fff4d8">KM</text>
+</svg>

@@ -1,0 +1,101 @@
+{
+  "version": "1.0.0",
+  "missions": [
+    {
+      "id": "m1",
+      "level": 1,
+      "title": "Møde uret",
+      "objective": "Forstå time- og minutviser.",
+      "skills": ["hands-identify", "clock-direction"],
+      "taskDistribution": {
+        "read_clock": 3,
+        "set_clock": 2,
+        "match_representation": 1,
+        "quick_review": 1
+      },
+      "requiredMastery": 70,
+      "difficultyBand": 1,
+      "totalTasks": 7
+    },
+    {
+      "id": "m2",
+      "level": 2,
+      "title": "Fuldtime og halvtime",
+      "objective": "Lær hele timer og halvtime, inklusive 'halv'.",
+      "skills": ["full-hours", "halves", "halv-phrasing"],
+      "taskDistribution": {
+        "read_clock": 2,
+        "set_clock": 2,
+        "match_representation": 2,
+        "missing_piece": 2
+      },
+      "requiredMastery": 75,
+      "difficultyBand": 2,
+      "totalTasks": 8
+    },
+    {
+      "id": "m3",
+      "level": 3,
+      "title": "Kvart over og kvart i",
+      "objective": "Træn kvarte-deling og kvart-sprog.",
+      "skills": ["quarters", "quarter-language"],
+      "taskDistribution": {
+        "read_clock": 2,
+        "set_clock": 2,
+        "match_representation": 2,
+        "error_detective": 2
+      },
+      "requiredMastery": 75,
+      "difficultyBand": 3,
+      "totalTasks": 8
+    },
+    {
+      "id": "m4",
+      "level": 4,
+      "title": "Hvert femte minut",
+      "objective": "Arbejde med fem-minuttersmærker.",
+      "skills": ["five-minute-markers", "minute-groups"],
+      "taskDistribution": {
+        "read_clock": 3,
+        "set_clock": 2,
+        "missing_piece": 2,
+        "quick_review": 1
+      },
+      "requiredMastery": 80,
+      "difficultyBand": 4,
+      "totalTasks": 8
+    },
+    {
+      "id": "m5",
+      "title": "Præcise minutter",
+      "level": 5,
+      "objective": "Lær præcise minutter og små forskydninger.",
+      "skills": ["exact-minutes", "minute-precision"],
+      "taskDistribution": {
+        "read_clock": 3,
+        "set_clock": 3,
+        "error_detective": 2,
+        "match_representation": 2
+      },
+      "requiredMastery": 82,
+      "difficultyBand": 5,
+      "totalTasks": 10
+    },
+    {
+      "id": "m6",
+      "title": "Oversæt mellem former",
+      "level": 6,
+      "objective": "Sammenhæng mellem analog, digital og sproglig tid.",
+      "skills": ["translation", "cross-form"],
+      "taskDistribution": {
+        "match_representation": 4,
+        "set_clock": 2,
+        "read_clock": 2,
+        "boss_mission": 2
+      },
+      "requiredMastery": 84,
+      "difficultyBand": 6,
+      "totalTasks": 10
+    }
+  ]
+}

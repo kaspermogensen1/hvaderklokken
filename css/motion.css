@@ -1,0 +1,58 @@
+@media (prefers-reduced-motion: no-preference) {
+  .card,
+  .task-area,
+  .clock-shell,
+  .clock-hand {
+    transition: transform 120ms ease-out, box-shadow 200ms ease;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .task-area,
+  .clock-shell,
+  .clock-hand {
+    transition: none;
+  }
+}
+
+/* Gamification Juice / FX */
+@keyframes bounce-joy {
+  0%, 100% { transform: scale(1); }
+  30% { transform: scale(1.1) translateY(-10px); }
+  60% { transform: scale(0.95) translateY(5px); }
+  80% { transform: scale(1.02) translateY(-2px); }
+}
+
+.bounce-joy {
+  animation: bounce-joy 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+@keyframes wobble-error {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px) rotate(-2deg); }
+  40% { transform: translateX(6px) rotate(2deg); }
+  60% { transform: translateX(-4px) rotate(-1deg); }
+  80% { transform: translateX(2px) rotate(1deg); }
+}
+
+.wobble-error {
+  animation: wobble-error 0.5s ease-in-out;
+}
+
+.wobble-error.btn {
+  background-color: #e2e8f0;
+  color: #64748b;
+  border-color: #cbd5e1;
+  pointer-events: none;
+}
+
+@keyframes bg-radiant {
+  0% { background: #f0f4f8; }
+  50% { background: #fff5d1; }
+  100% { background: #f0f4f8; }
+}
+
+.bg-radiant {
+  animation: bg-radiant 1.2s ease-out;
+}
